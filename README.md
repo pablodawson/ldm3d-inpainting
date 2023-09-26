@@ -3,6 +3,19 @@
 This is a modified version that adds inpainting capabilities, so you can fill in Depth and Color in images.
 The Unet was re-trained with an extra 5 channels (1 for the mask, 4 for the masked depth/color joint image).
 
+# Example
+Original image: \
+![Original image](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/github_misc/og_rgb.png)
+Original depth: \
+![Original depth](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/github_misc/og_depth.png)
+Mask: \
+![Mask](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/github_misc/mask.png)
+Output Image: \
+![Output image](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/github_misc/inpaint_rgb.png)
+Output Depth: \
+![Output depth](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/github_misc/inpaint_depth.png)
+
+
 ## Usage
 Use the *StableDiffusionLDM3DInpaintPipeline* class in this [diffusers](https://github.com/pablodawson/diffusers) fork
 
