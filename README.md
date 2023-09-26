@@ -5,15 +5,15 @@ The Unet was re-trained with an extra 5 channels (1 for the mask, 4 for the mask
 
 # Example
 Original image: \
-![Original image](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/github_misc/og_rgb.png)
+![Original image](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/main/github_misc/og_rgb.png)
 Original depth: \
-![Original depth](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/github_misc/og_depth.png)
+![Original depth](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/main/github_misc/og_depth.png)
 Mask: \
-![Mask](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/github_misc/mask.png)
+![Mask](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/main/github_misc/mask.png)
 Output Image: \
-![Output image](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/github_misc/inpaint_rgb.png)
+![Output image](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/main/github_misc/inpaint_rgb.png)
 Output Depth: \
-![Output depth](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/github_misc/inpaint_depth.png)
+![Output depth](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/main/github_misc/inpaint_depth.png)
 
 
 ## Usage
