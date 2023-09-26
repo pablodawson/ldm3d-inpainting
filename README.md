@@ -4,17 +4,19 @@ This is a modified version that adds inpainting capabilities, so you can fill in
 The Unet was re-trained with an extra 5 channels (1 for the mask, 4 for the masked depth/color joint image).
 
 # Example
-Original image: \
-![Original image](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/main/github_misc/og_rgb.png)
-Original depth: \
-![Original depth](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/main/github_misc/og_depth.png)
-Mask: \
-![Mask](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/main/github_misc/mask.png)
-Output Image: \
-![Output image](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/main/github_misc/inpaint_rgb.png)
-Output Depth: \
-![Output depth](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/main/github_misc/inpaint_depth.png)
+Original Image+Depth: \
+```
+a photo of an astronaut riding a horse on mars
+```
+![Original Image+Depth](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/main/github_misc/og.png) \
+Inpainted Image+Depth: \
+```
+a photo of an astronaut riding a pig
+```
+![Inpainted Image+Depth](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/main/github_misc/gen.png)\
 
+Mask: \
+![Mask](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/main/github_misc/mask.png)\
 
 ## Usage
 Use the *StableDiffusionLDM3DInpaintPipeline* class in this [diffusers](https://github.com/pablodawson/diffusers) fork
