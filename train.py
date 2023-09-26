@@ -308,7 +308,7 @@ def parse_args():
         help="whether to randomly flip images horizontally",
     )
     parser.add_argument(
-        "--train_batch_size", type=int, default=2, help="Batch size (per device) for the training dataloader."
+        "--train_batch_size", type=int, default=1, help="Batch size (per device) for the training dataloader."
     )
     parser.add_argument("--num_train_epochs", type=int, default=100)
     parser.add_argument(
@@ -649,7 +649,10 @@ def main():
                     model.save_pretrained(os.path.join(output_dir, "unet"))
 
                     # make sure to pop weight so that corresponding model is not saved again
-                    weights.pop()
+                    try:
+                        weights.pop()
+                    except:
+                        print("could not pop weight")
 
         def load_model_hook(models, input_dir):
             if args.use_ema:
@@ -911,7 +914,7 @@ def main():
     image_processor_3d = VaeImageProcessorLDM3D()
 
     # MIDAS depth estimation
-    model_type = "DPT_Hybrid"
+    model_type = "DPT_Large"
     midas = torch.hub.load("intel-isl/MiDaS", model_type)
     midas.to(accelerator.device)
     midas.eval()
@@ -923,10 +926,10 @@ def main():
 
     def estimate_depth(images):
         # Transform back to image to estimate depth, should be a better way to do this (gpu -> cpu -> gpu)
-        #images = (images / 2.0) + 0.5 # invert normalize
+        images = (images / 2.0) + 0.5 # invert normalize
         images=  [(image.permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8) for image in images]
         input_batch = torch.stack([transform_midas(image)[0] for image in images]).to("cuda:0")
-
+        
         with torch.no_grad():
             prediction = midas(input_batch)
             prediction = torch.nn.functional.interpolate(
@@ -944,20 +947,33 @@ def main():
     mask_generator = MaskGenerator(args.resolution, args.resolution, channels=1)
 
     def generate_mask(batch_size=1):
+        
         mask = mask_generator.sample()
+        if random.random() < 0.2:
+            mask = np.zeros_like(mask)
 
         for _ in range(batch_size-1):
             mask_temp = mask_generator.sample()
                 # rng 20% mask everything
             if random.random() < 0.2:
-                mask_temp = np.ones_like(mask_temp)
+                mask_temp = np.zeros_like(mask_temp)
             
             mask = np.concatenate((mask, mask_temp), axis=2)
 
-        mask = torch.from_numpy(mask).float()
+        mask = torch.from_numpy(1- mask).float()
         mask = np.expand_dims(mask, axis=0).transpose(3, 0, 1, 2)
         
         return torch.from_numpy(mask).float()
+
+    debug = False
+
+    def tensor_to_image(tensor):
+        image_save = (tensor[0].permute(1,2,0).cpu().numpy() * 255).astype(np.uint8)
+        if image_save.shape[2]==1:
+            image_save = image_save.repeat(3, axis=2)
+        return Image.fromarray(image_save)
+    
+
 
     for epoch in range(first_epoch, args.num_train_epochs):
         unet.train()
@@ -973,16 +989,25 @@ def main():
                 # Convert images to latent space
                 image = batch["pixel_values"].to(weight_dtype)
 
-                if (image == 0).all():
+                if (image.cpu().numpy() == 0).all() or (image.cpu().numpy() == -1).all():
                     print("Image is black, skipping")
                     continue
                     
                 depth = estimate_depth(image).to(weight_dtype)
+
+
                 mask_condition = generate_mask(batch_size = image.shape[0]).to(weight_dtype).to(accelerator.device)
 
                 mask = torch.nn.functional.interpolate(
                     mask_condition, size=(64, 64)
                 )
+
+                # debug images
+                if debug:
+                    image = (image / 2.0) + 0.5
+                    tensor_to_image(image).save(f"image_{epoch}_{step}.png")
+                    tensor_to_image(depth).save(f"depth_{epoch}_{step}.png")
+                    tensor_to_image(mask_condition).save(f"mask_condition_{epoch}_{step}.png")
 
                 init_concat = torch.cat([image, depth], dim=1)
 
@@ -1011,8 +1036,11 @@ def main():
                 # (this is the forward diffusion process)
                 if args.input_perturbation:
                     noisy_latents = noise_scheduler.add_noise(latents, new_noise, timesteps)
+                    noisy_masked_image_latents = noise_scheduler.add_noise(masked_image_latents, new_noise, timesteps)
                 else:
                     noisy_latents = noise_scheduler.add_noise(latents, noise, timesteps)
+                    noisy_masked_image_latents = noise_scheduler.add_noise(masked_image_latents, noise, timesteps)
+
 
                 # Get the text embedding for conditioning
                 encoder_hidden_states = text_encoder(batch["input_ids"])[0]
@@ -1029,7 +1057,9 @@ def main():
                 else:
                     raise ValueError(f"Unknown prediction type {noise_scheduler.config.prediction_type}")
 
-                latent_inputs  = torch.cat([noisy_latents, mask, masked_image_latents], dim=1)
+                # Q: We input noisy masked_image_latents or not?
+                
+                latent_inputs  = torch.cat([noisy_latents, mask, noisy_masked_image_latents], dim=1)
                 # Predict the noise residual and compute loss
                 model_pred = unet(latent_inputs, timesteps, encoder_hidden_states).sample
 
