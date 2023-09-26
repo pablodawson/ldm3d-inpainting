@@ -16,6 +16,7 @@ a photo of an astronaut riding a pig
 ![Inpainted Image+Depth](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/main/github_misc/gen.png)
 
 Mask:
+
 ![Mask](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/main/github_misc/mask.png)\
 
 ## Usage
@@ -39,3 +40,6 @@ This was the training script used:
 ```
 accelerate launch train.py --mixed_precision="fp16"  --use_ema   --resolution=512 --random_flip   --train_batch_size=1   --gradient_accumulation_steps=4   --gradient_checkpointing   --max_train_steps=15000   --learning_rate=1e-05   --max_grad_norm=1   --checkpointing_steps=1000  --lr_scheduler="constant" --lr_warmup_steps=0
 ```
+
+## Quickstart with Colab
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1rPYhMUke3o9wnEd44uT2NMUVLXmMRWbg?usp=sharing) | gaussian_splatting_colab
