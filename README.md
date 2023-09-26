@@ -4,18 +4,18 @@ This is a modified version that adds inpainting capabilities, so you can fill in
 The Unet was re-trained with an extra 5 channels (1 for the mask, 4 for the masked depth/color joint image).
 
 # Example
-Original Image+Depth: \
+Original Image+Depth:
 ```
 a photo of an astronaut riding a horse on mars
 ```
-![Original Image+Depth](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/main/github_misc/og.png) \
-Inpainted Image+Depth: \
+![Original Image+Depth](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/main/github_misc/og.png)
+Inpainted Image+Depth:
 ```
 a photo of an astronaut riding a pig
 ```
-![Inpainted Image+Depth](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/main/github_misc/gen.png)\
+![Inpainted Image+Depth](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/main/github_misc/gen.png)
 
-Mask: \
+Mask:
 ![Mask](https://raw.githubusercontent.com/pablodawson/ldm3d-inpainting/main/github_misc/mask.png)\
 
 ## Usage
