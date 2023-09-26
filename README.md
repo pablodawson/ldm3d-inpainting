@@ -3,6 +3,9 @@
 This is a modified version that adds inpainting capabilities, so you can fill in Depth and Color in images.
 The Unet was re-trained with an extra 5 channels (1 for the mask, 4 for the masked depth/color joint image).
 
+## Quickstart with Colab
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1rPYhMUke3o9wnEd44uT2NMUVLXmMRWbg?usp=sharing)
+
 # Example
 Original Image+Depth:
 ```
@@ -41,5 +44,3 @@ This was the training script used:
 accelerate launch train.py --mixed_precision="fp16"  --use_ema   --resolution=512 --random_flip   --train_batch_size=1   --gradient_accumulation_steps=4   --gradient_checkpointing   --max_train_steps=15000   --learning_rate=1e-05   --max_grad_norm=1   --checkpointing_steps=1000  --lr_scheduler="constant" --lr_warmup_steps=0
 ```
 
-## Quickstart with Colab
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1rPYhMUke3o9wnEd44uT2NMUVLXmMRWbg?usp=sharing) | gaussian_splatting_colab
