@@ -21,6 +21,6 @@ output = pipe(prompt=prompt, image=input_image, mask_image=mask_image, depth_ima
 
 This was the training script used:
 
-´´´
+```
 accelerate launch train.py --mixed_precision="fp16"  --use_ema   --resolution=512 --random_flip   --train_batch_size=1   --gradient_accumulation_steps=4   --gradient_checkpointing   --max_train_steps=15000   --learning_rate=1e-05   --max_grad_norm=1   --checkpointing_steps=1000  --lr_scheduler="constant" --lr_warmup_steps=0
-´´´
+```
