@@ -3,8 +3,6 @@
 This is a modified version that adds inpainting capabilities, so you can fill in Depth and Color in images.
 The Unet was re-trained with an extra 5 channels (1 for the mask, 4 for the masked depth/color joint image).
 
-*HELP WANTED:* It could use more training to get cleaner results, but the loss curve stagnates around 7k steps in.
-
 ## Quickstart with Colab
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1rPYhMUke3o9wnEd44uT2NMUVLXmMRWbg?usp=sharing)
 
