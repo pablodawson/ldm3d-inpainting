@@ -338,7 +338,7 @@ def parse_args():
     parser.add_argument(
         "--scale_lr",
         action="store_true",
-        default=False,
+        default=True,
         help="Scale the learning rate by the number of GPUs, gradient accumulation steps, and batch size.",
     )
     parser.add_argument(
@@ -406,7 +406,7 @@ def parse_args():
     parser.add_argument(
         "--hub_model_id",
         type=str,
-        default=None,
+        default="pablodawson/ldm3d-inpainting",
         help="The name of the repository to keep in sync with the local `output_dir`.",
     )
     parser.add_argument(
@@ -421,7 +421,7 @@ def parse_args():
     parser.add_argument(
         "--mixed_precision",
         type=str,
-        default=None,
+        default="fp16",
         choices=["no", "fp16", "bf16"],
         help=(
             "Whether to use mixed precision. Choose between fp16 and bf16 (bfloat16). Bf16 requires PyTorch >="
