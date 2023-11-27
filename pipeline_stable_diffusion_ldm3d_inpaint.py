@@ -905,11 +905,6 @@ class StableDiffusionLDM3DInpaintPipeline(
 
         rgb, depth = self.image_processor_3d.postprocess(image, output_type=output_type, do_denormalize=do_denormalize)
         
-        # Uncomment to preserve original image
-        #mask = mask_condition[0][0].cpu().numpy()
-        #canvas = np.array(rgb[0])
-        #canvas[mask==0] = np.array(start_image)[mask==0]
-        #rgb = [PIL.Image.fromarray(canvas)]
         # Offload all models
         self.maybe_free_model_hooks()
 
