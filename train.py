@@ -12,7 +12,9 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-
+import sys
+sys.path.append("diffusers")
+sys.path.append("diffusers/midas")
 import argparse
 import logging
 import math
@@ -165,7 +167,6 @@ def log_validation(vae, text_encoder, tokenizer, unet, args, accelerator, weight
 
     if args.enable_xformers_memory_efficient_attention:
         pipeline.enable_xformers_memory_efficient_attention()
-
     if args.seed is None:
         generator = None
     else:
@@ -222,7 +223,7 @@ def parse_args():
     parser.add_argument(
         "--dataset_name",
         type=str,
-        default="ChristophSchuhmann/improved_aesthetics_6.5plus",
+        default="dclure/laion-aesthetics-12m-umap",
         help=(
             "The name of the Dataset (from the HuggingFace hub) to train on (could be your own, possibly private,"
             " dataset). It can also be a path pointing to a local copy of a dataset in your filesystem,"
@@ -882,6 +883,26 @@ def main():
     global_step = 0
     first_epoch = 0
 
+    def encode_empty_text():
+        """
+        Encode text embedding for empty prompt
+        """
+        dtype = weight_dtype
+
+        prompt = ""
+        text_inputs = tokenizer(
+            prompt,
+            padding="do_not_pad",
+            max_length=tokenizer.model_max_length,
+            truncation=True,
+            return_tensors="pt",
+        )
+        text_input_ids = text_inputs.input_ids.to(text_encoder.device)
+        empty_text_embed = text_encoder(text_input_ids)[0].to(dtype)
+
+        return empty_text_embed
+    
+    
     # Potentially load in the weights and states from a previous save
     if args.resume_from_checkpoint:
         if args.resume_from_checkpoint != "latest":
@@ -913,35 +934,58 @@ def main():
 
     image_processor_3d = VaeImageProcessorLDM3D()
 
-    # MIDAS depth estimation
-    model_type = "DPT_Large"
-    midas = torch.hub.load("intel-isl/MiDaS", model_type)
-    midas.to(accelerator.device)
-    midas.eval()
-    midas_transforms = torch.hub.load("intel-isl/MiDaS", "transforms")
-    if model_type == "DPT_Large" or model_type == "DPT_Hybrid":
-        transform_midas = midas_transforms.dpt_transform
-    else:
-        transform_midas = midas_transforms.small_transform
+    # DA depth estimation
+    sys.path.append('Depth-Anything')
+    
+    from depth_anything.dpt import DepthAnything
+    from depth_anything.util.transform import Resize, NormalizeImage, PrepareForNet
+    from torchvision.transforms import Compose
+    import torch.nn.functional as F
+    import cv2
+    import numpy as np
+        
+    # Depth Anything
+    encoder = 'vitl'
+    depth_anything = DepthAnything.from_pretrained('LiheYoung/depth_anything_{:}14'.format(encoder)).to(accelerator.device)
+    
+    transform = Compose([
+        Resize(
+            width=518,
+            height=518,
+            resize_target=False,
+            keep_aspect_ratio=True,
+            ensure_multiple_of=14,
+            resize_method='lower_bound',
+            image_interpolation_method=cv2.INTER_CUBIC,
+        ),
+        NormalizeImage(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        PrepareForNet(),
+    ])
 
     def estimate_depth(images):
         # Transform back to image to estimate depth, should be a better way to do this (gpu -> cpu -> gpu)
         images = (images / 2.0) + 0.5 # invert normalize
-        images=  [(image.permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8) for image in images]
-        input_batch = torch.stack([transform_midas(image)[0] for image in images]).to("cuda:0")
+        images=  [(image.permute(1, 2, 0).cpu().numpy()).astype(np.uint8) for image in images]
+        
+        image = images[0]
+        h, w = image.shape[:2]
+        
+        image = transform({'image': image})['image']
+        #print(image.shape)
+        image = torch.from_numpy(image).unsqueeze(0).to("cuda")
         
         with torch.no_grad():
-            prediction = midas(input_batch)
-            prediction = torch.nn.functional.interpolate(
-                prediction.unsqueeze(1),
-                size=images[0].shape[0:2],
-                mode="bicubic",
-                align_corners=False,
-            )
-        # Normalize again
-        prediction = (prediction - prediction.min()) / (prediction.max() - prediction.min() ) # Does it need to be -1 to 1?
-        prediction = 2* (prediction - 0.5 )
-        return prediction
+            depth = depth_anything(image)
+        
+        #print(depth.shape)
+        depth = F.interpolate(depth[None], (h, w), mode='bilinear', align_corners=False)[0, 0]
+        depth =  (depth - depth.min()) / (depth.max() - depth.min())
+        
+        prediction = 2* (depth - 0.5 )
+        #print(prediction.mean())
+        #print(prediction.max())
+        #print(prediction.min())
+        return prediction[None][None]
 
     # Mask generator
     mask_generator = MaskGenerator(args.resolution, args.resolution, channels=1)
@@ -1043,7 +1087,7 @@ def main():
 
 
                 # Get the text embedding for conditioning
-                encoder_hidden_states = text_encoder(batch["input_ids"])[0]
+                encoder_hidden_states = encode_empty_text()
 
                 # Get the target for loss depending on the prediction type
                 if args.prediction_type is not None:
